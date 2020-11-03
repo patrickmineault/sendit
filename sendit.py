@@ -11,6 +11,7 @@ import python_http_client
 from sendgrid import SendGridAPIClient
 import tabulate
 import tinydb
+import itertools
 
 
 def get_sg():
@@ -46,10 +47,13 @@ def get_template_tokens(template_key):
 
     template = json.loads(response.body)
     html_content = template['versions'][-1]['html_content']
+    subject = template['versions'][-1]['subject']
+
     tokens = chevron.tokenizer.tokenize(html_content)
+    subject_tokens = chevron.tokenizer.tokenize(subject)
 
     variables = []
-    for token_type, token in tokens:
+    for token_type, token in itertools.chain(tokens, subject_tokens):
         if token_type == 'variable':
             # This is replaceable token.
             sub_tokens = token.split()
@@ -147,7 +151,7 @@ def add_to_batch(batch_id, items):
     bad_tokens = collections.defaultdict(lambda: 0)
 
     for item in items:
-        for key in batch['tokens']:
+        for key in batch['tokens'] + ['categories']:
             if key not in item:
                 bad_tokens[key] += 1
 
@@ -219,8 +223,10 @@ def send_email(item, template_id):
         'from': {
             'email': item['from_email'],
             'name': item['from_name']
-        }
+        },
     }
+
+    data['categories'] = item['categories'].split(',')
 
     get_sg().client.mail.send.post(request_body=data)
     return True
@@ -293,7 +299,7 @@ def send_batch(batch_id, how_many):
         percentage = float(how_many[:-1] / 100)
         total_num = int(percentage * len(emails))
     elif how_many == 'all':
-        total_num = len(emails)
+        total_num = sum([1 for x in emails if not x['sent']])
     else:
         total_num = int(how_many)
 
