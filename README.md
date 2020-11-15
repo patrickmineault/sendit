@@ -8,6 +8,8 @@ A command line utility to send email batches with sendgrid - create email batche
 python sendit.py [verb] [arguments]
 ```
 
+Call `python sendit.py` without arguments to pull up the help.
+
 Verbs:
 
 * `list [all|batchid]`: list active batches. If `all`, also lists inactive batches. If `batchid`, give information about this batch.
