@@ -9,6 +9,7 @@ import os
 import pandas as pd
 import python_http_client
 from sendgrid import SendGridAPIClient
+import base64
 import tabulate
 import tinydb
 import itertools
@@ -20,6 +21,7 @@ def get_sg():
     # Send a no-op test request to make sure that keys are valid.
     try:
         response = sg.client.categories.get()
+        print(response)
     except python_http_client.exceptions.ForbiddenError:
         reason = "You do not have sufficient permissions to access the Sengrid API. Put your API key `SENDGRID_API_KEY` in the .env file."
         raise Exception(reason)
@@ -225,6 +227,20 @@ def send_email(item, template_id):
             'name': item['from_name']
         },
     }
+
+
+    if 'attachment' in item:
+        with open(item['attachment'],'rb') as f:
+            attach_data = f.read()
+            f.close()
+        encoded_file = base64.b64encode(attach_data).decode()
+        
+        data['attachments'] = [
+            {
+                'content':encoded_file,
+                'filename':item['attachment']
+            },
+            ]
 
     data['categories'] = item['categories'].split(',')
 
