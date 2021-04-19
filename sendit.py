@@ -21,7 +21,6 @@ def get_sg():
     # Send a no-op test request to make sure that keys are valid.
     try:
         response = sg.client.categories.get()
-        print(response)
     except python_http_client.exceptions.ForbiddenError:
         reason = "You do not have sufficient permissions to access the Sengrid API. Put your API key `SENDGRID_API_KEY` in the .env file."
         raise Exception(reason)
